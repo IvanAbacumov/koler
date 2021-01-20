@@ -30,44 +30,19 @@ Feel free to contact us for every little thing
 
 ## Features
 ### Design
-One of the main features of the app is the design.
-Its goal it to make the app intuitive and comfortable.
+Its out main goal to make the app intuitive and comfortable.
+We want the dumbest people to be able to enjoy the app.
 
-### In Call Interface
-Our ongoing call UI makes everything easier.
-It uses swipes and minimalistic design, making everything more beautiful, intuitive, yet still productive.
+### Call Experience
+Have an easy intuitive and simple call experience.
 
-In an incoming call, you can do the following before answering:
-* Reject and send the caller an SMS
-* Reject in a specified amount of seconds
-* Answer in a specified amount of seconds
+### Whatever you want
+After I finish the new version, all the improvements will come from you
+The app is meant to be for the customers so feel free to send any feature request for future development
 
-In an ongoing call you can:
-* Hang-up in a specified amount of seconds
+### And more
+Im working on a new version so give me some time pls thanks
 
-To use those features simply long click the answer or decline buttons for the appropriate action
-
-### Swipes
-The app's main goal is to be more intuitive and comfortable. For that reason, we tried to add more swipes into the app's functionality
-    * ### Call screen features
-       * __Open keypad__     - Swipe up   
-       * __Reject/End__      - Swipe left  
-       * __Answer__          - Swipe right 
-       * __Send sms__        - Swipe up on the send SMS overlay
-
-### Call Actions
-In Koler you can interact with incoming calls in new ways
-  * ### Timer action
-  You can answer and decline using a timer which you can modify in the settings
-  * ### Sms decline
-  Decling the call while sending an SMS
-
-### Excel Page
-Another great feature in Koler is the ability to import and manage calls using an excel file
-Koler offers a comfortable and simple UI for managing and editing a list of contacts
-The Excel feature also offers the ability to call the list of imported contacts one by one
-Great for people who call a lot of people one by one
- 
 ## GET THE APP
  * Download it from the [Google Play Store](https://play.google.com/store/apps/details?id=com.chooloo.www.callmanager&pcampaignid=MKT-Other-global-all-co-prtnr-py-PartBadge-Mar2515-1)
  * Download it from Github under [Releases](https://github.com/Chooloo/call_manage/releases "Releases")
