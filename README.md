@@ -37,7 +37,7 @@ We want the dumbest people to be able to enjoy the app.
 Have an easy intuitive and simple call experience.
 
 ### Whatever you want
-After I finish the new version, all the improvements will come from you
+After the new version is done, all the improvements will come from you guys.
 The app is meant to be for the customers so feel free to send any feature request for future development
 
 ### And more
