@@ -1,133 +1,97 @@
-package com.chooloo.www.callmanager.adapter;
+package com.chooloo.www.callmanager.adapter
 
-import android.annotation.SuppressLint;
-import android.view.LayoutInflater;
-import android.view.MotionEvent;
-import android.view.View;
-import android.view.ViewGroup;
-import android.view.animation.OvershootInterpolator;
-import android.widget.ImageView;
-import android.widget.TextView;
+import android.annotation.SuppressLint
+import android.view.LayoutInflater
+import android.view.MotionEvent
+import android.view.View
+import android.view.ViewGroup
+import android.view.animation.OvershootInterpolator
+import android.widget.ImageView
+import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
+import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.constraintlayout.widget.ConstraintSet
+import androidx.recyclerview.widget.RecyclerView
+import androidx.transition.AutoTransition
+import androidx.transition.Transition
+import androidx.transition.TransitionManager
+import butterknife.BindView
+import butterknife.ButterKnife
+import com.chooloo.www.callmanager.R
+import com.chooloo.www.callmanager.adapter.SingleCGroupAdapter.ContactHolder
+import com.chooloo.www.callmanager.adapter.helper.ItemTouchHelperListener
+import com.chooloo.www.callmanager.adapter.helper.ItemTouchHelperViewHolder
+import com.chooloo.www.callmanager.adapter.helper.SimpleItemTouchHelperCallback.ItemTouchHelperAdapter
+import com.chooloo.www.callmanager.database.AppDatabase
+import com.chooloo.www.callmanager.database.DataRepository
+import com.chooloo.www.callmanager.database.entity.Contact
+import java.util.*
+import kotlin.collections.ArrayList
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.constraintlayout.widget.ConstraintSet;
-import androidx.recyclerview.widget.RecyclerView;
-import androidx.transition.AutoTransition;
-import androidx.transition.Transition;
-import androidx.transition.TransitionManager;
-
-import com.chooloo.www.callmanager.R;
-import com.chooloo.www.callmanager.adapter.helper.ItemTouchHelperListener;
-import com.chooloo.www.callmanager.adapter.helper.ItemTouchHelperViewHolder;
-import com.chooloo.www.callmanager.adapter.helper.SimpleItemTouchHelperCallback;
-import com.chooloo.www.callmanager.database.AppDatabase;
-import com.chooloo.www.callmanager.database.DataRepository;
-import com.chooloo.www.callmanager.database.entity.Contact;
-
-import java.util.Collections;
-import java.util.List;
-
-import butterknife.BindView;
-import butterknife.ButterKnife;
-
-public class SingleCGroupAdapter extends RecyclerView.Adapter<SingleCGroupAdapter.ContactHolder>
-        implements SimpleItemTouchHelperCallback.ItemTouchHelperAdapter {
-
-    private AppCompatActivity mContext;
-    private DataRepository mRepository;
-
-    private List<Contact> mData;
-
-    private boolean mEditModeEnabled = false;
-
-    private RecyclerView mRecyclerView;
-    private ItemTouchHelperListener mItemTouchHelperListener;
-
-    public SingleCGroupAdapter(AppCompatActivity context, RecyclerView recyclerView, ItemTouchHelperListener itemTouchHelperListener) {
-        mContext = context;
-        mRecyclerView = recyclerView;
-        mItemTouchHelperListener = itemTouchHelperListener;
-
-        mRepository = DataRepository.getInstance(AppDatabase.getDatabase(mContext));
-    }
-
-    @NonNull
-    @Override
-    public ContactHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(mContext).inflate(R.layout.list_item_editable, parent, false);
-        ContactHolder holder = new ContactHolder(view);
-        return holder;
+class SingleCGroupAdapter(private val mContext: AppCompatActivity, private val mRecyclerView: RecyclerView, private val mItemTouchHelperListener: ItemTouchHelperListener?) : RecyclerView.Adapter<ContactHolder>(), ItemTouchHelperAdapter {
+    private val mRepository: DataRepository
+    private var mData: ArrayList<Contact?>? = null
+    private var mEditModeEnabled = false
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ContactHolder {
+        val view = LayoutInflater.from(mContext).inflate(R.layout.list_item_editable, parent, false)
+        return ContactHolder(view)
     }
 
     @SuppressLint("ClickableViewAccessibility")
-    @Override
-    public void onBindViewHolder(@NonNull ContactHolder holder, int position) {
-        Contact contact = mData.get(position);
-
-        holder.name.setText(contact.getName());
-        holder.number.setText(contact.getMainPhoneNumber());
-
-        holder.dragHandle.setOnTouchListener((v, event) -> {
-            if (event.getActionMasked() ==
+    override fun onBindViewHolder(holder: ContactHolder, position: Int) {
+        val contact = mData!![position]
+        holder.name!!.text = contact!!.name
+        holder.number!!.text = contact.mainPhoneNumber
+        holder.dragHandle!!.setOnTouchListener { v: View?, event: MotionEvent ->
+            if (event.actionMasked ==
                     MotionEvent.ACTION_DOWN) {
-                mItemTouchHelperListener.onStartDrag(holder);
+                mItemTouchHelperListener!!.onStartDrag(holder)
             }
-            return false;
-        });
-
-        holder.removeItem.setOnClickListener(v -> onItemDismiss(holder.getAdapterPosition()));
-
-        ConstraintLayout itemRoot = (ConstraintLayout) holder.itemView;
-        ConstraintSet set = new ConstraintSet();
-        int layoutId = mEditModeEnabled ? R.layout.list_item_editable_modified : R.layout.list_item_editable;
-        set.load(mContext, layoutId);
-        set.applyTo(itemRoot);
+            false
+        }
+        holder.removeItem!!.setOnClickListener { v: View? -> onItemDismiss(holder.adapterPosition) }
+        val itemRoot = holder.itemView as ConstraintLayout
+        val set = ConstraintSet()
+        val layoutId = if (mEditModeEnabled) R.layout.list_item_editable_modified else R.layout.list_item_editable
+        set.load(mContext, layoutId)
+        set.applyTo(itemRoot)
     }
 
-    @Override
-    public int getItemCount() {
-        if (mData == null) return 0;
-        return mData.size();
+    override fun getItemCount(): Int {
+        return if (mData == null) 0 else mData!!.size
     }
 
-    @Override
-    public void onItemMove(int fromPosition, int toPosition) {
+    override fun onItemMove(fromPosition: Int, toPosition: Int) {
 
         //Switch in database
-        Contact firstContact = mData.get(fromPosition);
-        Contact secondContact = mData.get(toPosition);
-        long temp = firstContact.getContactId();
-        firstContact.setContactId(secondContact.getContactId());
-        secondContact.setContactId(temp);
-        mRepository.update(firstContact, secondContact);
+        val firstContact = mData!![fromPosition]
+        val secondContact = mData!![toPosition]
+        val temp = firstContact!!.contactId
+        firstContact.contactId = secondContact!!.contactId
+        secondContact.contactId = temp
+        mRepository.update(firstContact, secondContact)
 
         //Switch in list - has to be this way for smooth dragging
         if (fromPosition < toPosition) {
-            for (int i = fromPosition; i < toPosition; i++) {
-                Collections.swap(mData, i, i + 1);
+            for (i in fromPosition until toPosition) {
+                Collections.swap(mData, i, i + 1)
             }
         } else {
-            for (int i = fromPosition; i > toPosition; i--) {
-                Collections.swap(mData, i, i - 1);
+            for (i in fromPosition downTo toPosition + 1) {
+                Collections.swap(mData, i, i - 1)
             }
         }
-
-        notifyItemMoved(fromPosition, toPosition);
+        notifyItemMoved(fromPosition, toPosition)
     }
 
-    @Override
-    public void onItemDismiss(int position) {
+    override fun onItemDismiss(position: Int) {
         //Remove in database
-        long id = mData.get(position).getContactId();
+        val id = mData!![position]!!.contactId
 
         //Remove in list
-        mData.remove(position);
-
-        mRepository.deleteContact(id);
-
-        notifyItemRemoved(position);
+        mData?.removeAt(position)
+        mRepository.deleteContact(id)
+        notifyItemRemoved(position)
     }
 
     /**
@@ -135,10 +99,10 @@ public class SingleCGroupAdapter extends RecyclerView.Adapter<SingleCGroupAdapte
      *
      * @param data
      */
-    public void setData(List<Contact> data) {
-        if (mData != null) return;
-        mData = data;
-        notifyDataSetChanged();
+    fun setData(data: ArrayList<Contact?>?) {
+        if (mData != null) return
+        mData = data
+        notifyDataSetChanged()
     }
 
     /**
@@ -146,55 +110,60 @@ public class SingleCGroupAdapter extends RecyclerView.Adapter<SingleCGroupAdapte
      *
      * @param enable true/false
      */
-    public void enableEditMode(boolean enable) {
-        if (mEditModeEnabled == enable) return;
-        mEditModeEnabled = enable;
+    fun enableEditMode(enable: Boolean) {
+        if (mEditModeEnabled == enable) return
+        mEditModeEnabled = enable
 
         //Animate all the RecyclerView items:
-        for (int i = 0; i < getItemCount(); i++) {
-            ContactHolder holder = (ContactHolder) mRecyclerView.findViewHolderForAdapterPosition(i);
-            if (holder != null) holder.animate();
+        for (i in 0 until itemCount) {
+            val holder = mRecyclerView.findViewHolderForAdapterPosition(i) as ContactHolder?
+            holder?.animate()
         }
     }
 
-    public class ContactHolder extends RecyclerView.ViewHolder implements ItemTouchHelperViewHolder {
+    inner class ContactHolder(itemView: View) : RecyclerView.ViewHolder(itemView), ItemTouchHelperViewHolder {
+        @BindView(R.id.item_photo)
+        var image: ImageView? = null
 
-        @BindView(R.id.item_photo) ImageView image;
-        @BindView(R.id.item_big_text) TextView name;
-        @BindView(R.id.item_small_text) TextView number;
+        @BindView(R.id.item_big_text)
+        var name: TextView? = null
 
-        @BindView(R.id.drag_handle) ImageView dragHandle;
-        @BindView(R.id.item_remove) ImageView removeItem;
+        @BindView(R.id.item_small_text)
+        var number: TextView? = null
 
-        public ContactHolder(@NonNull View itemView) {
-            super(itemView);
-            ButterKnife.bind(this, itemView);
+        @BindView(R.id.drag_handle)
+        var dragHandle: ImageView? = null
+
+        @BindView(R.id.item_remove)
+        var removeItem: ImageView? = null
+        override fun onItemSelected() {
+            enableEditMode(true)
+            mItemTouchHelperListener?.onItemSelected(this)
         }
 
-        @Override
-        public void onItemSelected() {
-            enableEditMode(true);
-            if (mItemTouchHelperListener != null) mItemTouchHelperListener.onItemSelected(this);
-        }
-
-        @Override
-        public void onItemClear() {
-        }
+        override fun onItemClear() {}
 
         /**
          * Animates the ContactHolder
          */
-        public void animate() {
-            ConstraintLayout itemRoot = (ConstraintLayout) itemView;
-            ConstraintSet set = new ConstraintSet();
-            set.clone(itemRoot);
-
-            Transition transition = new AutoTransition();
-            transition.setInterpolator(new OvershootInterpolator());
-            TransitionManager.beginDelayedTransition(itemRoot, transition);
-            int layoutId = mEditModeEnabled ? R.layout.list_item_editable_modified : R.layout.list_item_editable;
-            set.load(mContext, layoutId);
-            set.applyTo(itemRoot);
+        fun animate() {
+            val itemRoot = itemView as ConstraintLayout
+            val set = ConstraintSet()
+            set.clone(itemRoot)
+            val transition: Transition = AutoTransition()
+            transition.interpolator = OvershootInterpolator()
+            TransitionManager.beginDelayedTransition(itemRoot, transition)
+            val layoutId = if (mEditModeEnabled) R.layout.list_item_editable_modified else R.layout.list_item_editable
+            set.load(mContext, layoutId)
+            set.applyTo(itemRoot)
         }
+
+        init {
+            ButterKnife.bind(this, itemView)
+        }
+    }
+
+    init {
+        mRepository = DataRepository.getInstance(AppDatabase.getDatabase(mContext))
     }
 }

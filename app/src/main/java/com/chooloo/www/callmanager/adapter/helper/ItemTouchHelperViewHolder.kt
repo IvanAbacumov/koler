@@ -1,25 +1,21 @@
-package com.chooloo.www.callmanager.adapter.helper;
-
-import androidx.recyclerview.widget.ItemTouchHelper;
+package com.chooloo.www.callmanager.adapter.helper
 
 /**
  * Notifies a View Holder of relevant callbacks from
- * {@link ItemTouchHelper.Callback}.
+ * [ItemTouchHelper.Callback].
  */
-public interface ItemTouchHelperViewHolder {
-
+interface ItemTouchHelperViewHolder {
     /**
-     * Called when the {@link ItemTouchHelper} first registers an
+     * Called when the [ItemTouchHelper] first registers an
      * item as being moved or swiped.
      * Implementations should update the item view to indicate
      * it's active state.
      */
-    void onItemSelected();
-
+    fun onItemSelected()
 
     /**
-     * Called when the {@link ItemTouchHelper} has completed the
+     * Called when the [ItemTouchHelper] has completed the
      * move or swipe, and the active item state should be cleared.
      */
-    void onItemClear();
+    fun onItemClear()
 }

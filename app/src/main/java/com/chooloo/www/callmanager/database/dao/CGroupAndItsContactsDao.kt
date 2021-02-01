@@ -1,18 +1,14 @@
-package com.chooloo.www.callmanager.database.dao;
+package com.chooloo.www.callmanager.database.dao
 
-import androidx.lifecycle.LiveData;
-import androidx.room.Dao;
-import androidx.room.Query;
-import androidx.room.Transaction;
-
-import com.chooloo.www.callmanager.database.entity.CGroupAndItsContacts;
-
-import java.util.List;
+import androidx.lifecycle.LiveData
+import androidx.room.Dao
+import androidx.room.Query
+import androidx.room.Transaction
+import com.chooloo.www.callmanager.database.entity.CGroupAndItsContacts
 
 @Dao
-public interface CGroupAndItsContactsDao {
-
-    @Query("SELECT * from cgroup_table")
-    @Transaction
-    LiveData<List<CGroupAndItsContacts>> getAllCGroupsAndTheirContacts();
+interface CGroupAndItsContactsDao {
+    @get:Transaction
+    @get:Query("SELECT * from cgroup_table")
+    val allCGroupsAndTheirContacts: LiveData<List<CGroupAndItsContacts?>?>?
 }

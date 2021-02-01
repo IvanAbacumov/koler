@@ -1,22 +1,18 @@
-package com.chooloo.www.callmanager.database;
+package com.chooloo.www.callmanager.database
 
-import androidx.room.TypeConverter;
+import androidx.room.TypeConverter
+import com.chooloo.www.callmanager.util.Utilities
+import java.util.*
 
-import com.chooloo.www.callmanager.util.Utilities;
-
-import java.util.Arrays;
-import java.util.List;
-
-public class Converters {
-
+object Converters {
     @TypeConverter
-    public static String listToString(List<String> list) {
-        return Utilities.joinStringsWithSeparator(list, ";");
+    fun listToString(list: List<String?>?): String {
+        return Utilities.joinStringsWithSeparator(list!!, ";")
     }
 
     @TypeConverter
-    public static List<String> stringToList(String str) {
-        String[] arr = str.split(";");
-        return Arrays.asList(arr);
+    fun stringToList(str: String): List<String> {
+        val arr = str.split(";").toTypedArray()
+        return Arrays.asList(*arr)
     }
 }

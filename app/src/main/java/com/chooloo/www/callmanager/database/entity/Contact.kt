@@ -1,57 +1,82 @@
-package com.chooloo.www.callmanager.database.entity;
+package com.chooloo.www.callmanager.database.entity
 
-import android.database.Cursor;
+import android.database.Cursor
+import androidx.room.*
+import com.chooloo.www.callmanager.cursorloader.ContactsCursorLoader
+import com.chooloo.www.callmanager.util.Utilities
+import java.io.Serializable
+import java.io.UnsupportedEncodingException
+import java.net.URLDecoder
+import java.util.*
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.room.ColumnInfo;
-import androidx.room.Entity;
-import androidx.room.ForeignKey;
-import androidx.room.Ignore;
-import androidx.room.Index;
-import androidx.room.PrimaryKey;
-
-import com.chooloo.www.callmanager.util.Utilities;
-
-import java.io.Serializable;
-import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
-import java.util.List;
-
-import static com.chooloo.www.callmanager.cursorloader.ContactsCursorLoader.COLUMN_ID;
-import static com.chooloo.www.callmanager.cursorloader.ContactsCursorLoader.COLUMN_NAME;
-import static com.chooloo.www.callmanager.cursorloader.ContactsCursorLoader.COLUMN_NUMBER;
-import static com.chooloo.www.callmanager.cursorloader.ContactsCursorLoader.COLUMN_STARRED;
-import static com.chooloo.www.callmanager.cursorloader.ContactsCursorLoader.COLUMN_THUMBNAIL;
-
-@Entity(tableName = "contact_table",
-        indices = {@Index("list_id")},
-        foreignKeys = @ForeignKey(entity = CGroup.class,
-                parentColumns = "list_id",
-                childColumns = "list_id",
-                onDelete = ForeignKey.CASCADE))
-
-public class Contact implements Serializable {
-
+@Entity(tableName = "contact_table", indices = [Index("list_id")], foreignKeys = [ForeignKey(entity = CGroup::class, parentColumns = ["list_id"], childColumns = ["list_id"], onDelete = ForeignKey.CASCADE)])
+class Contact : Serializable {
+    /**
+     * Returns the contact's id
+     *
+     * @return the contact's id
+     */
+    /**
+     * Sets the contact's id by a given id
+     *
+     * @param contactId
+     */
     @PrimaryKey(autoGenerate = true)
     @ColumnInfo(name = "contact_id")
-    long contactId;
-
+    var contactId: Long = 0
+    /**
+     * Returns the contact's list id
+     *
+     * @return long
+     */
+    /**
+     * Sets the contact's list id by a given number
+     *
+     * @param listId
+     */
     @ColumnInfo(name = "list_id")
-    private long listId;
-
+    var listId: Long = 0
+    /**
+     * Returns the contact's name
+     *
+     * @return String of the name
+     */
+    /**
+     * Sets the contact's name by a given String
+     *
+     * @param name
+     */
     @ColumnInfo(name = "full_name")
-    private String name;
+    var name: String
 
     @ColumnInfo(name = "phone_numbers")
-    @NonNull
-    private List<String> phoneNumbers;
-
+    private var phoneNumbers: MutableList<String?>
+    /**
+     * Returns the contact's image (Uri)
+     *
+     * @return String
+     */
+    /**
+     * Sets the contact's image by a given image (String)
+     *
+     * @param photoUri
+     */
     @Ignore
-    private String photoUri; // No need to save this to the database
-
+    var photoUri // No need to save this to the database
+            : String? = null
+    /**
+     * Returns wither the contact is a favorite contact
+     *
+     * @return
+     */
+    /**
+     * Makes the contact favorite/not favorite
+     *
+     * @param isFavorite
+     * @return
+     */
     @ColumnInfo(name = "is_favorite")
-    private boolean isFavorite;
+    var isFavorite = false
 
     /**
      * Contact constructor
@@ -60,9 +85,9 @@ public class Contact implements Serializable {
      * @param name
      * @param phoneNumbers
      */
-    public Contact(String name, @NonNull List<String> phoneNumbers) {
-        this.name = name;
-        this.phoneNumbers = phoneNumbers;
+    constructor(name: String, phoneNumbers: MutableList<String?>) {
+        this.name = name
+        this.phoneNumbers = phoneNumbers
     }
 
     /**
@@ -72,10 +97,10 @@ public class Contact implements Serializable {
      * @param name
      * @param phoneNumber
      */
-    public Contact(String name, @Nullable String phoneNumber) {
-        this.name = name;
-        this.phoneNumbers = new ArrayList<String>();
-        this.phoneNumbers.add(phoneNumber);
+    constructor(name: String, phoneNumber: String?) {
+        this.name = name
+        phoneNumbers = ArrayList()
+        phoneNumbers.add(phoneNumber)
     }
 
     /**
@@ -87,10 +112,10 @@ public class Contact implements Serializable {
      * @param photoUri
      */
     @Ignore
-    public Contact(String name, @NonNull List<String> phoneNumbers, String photoUri) {
-        this.name = name;
-        this.phoneNumbers = phoneNumbers;
-        this.photoUri = photoUri;
+    constructor(name: String, phoneNumbers: MutableList<String?>, photoUri: String?) {
+        this.name = name
+        this.phoneNumbers = phoneNumbers
+        this.photoUri = photoUri
     }
 
     /**
@@ -102,11 +127,11 @@ public class Contact implements Serializable {
      * @param photoUri    the contact's image
      */
     @Ignore
-    public Contact(String name, @NonNull String phoneNumber, @Nullable String photoUri) {
-        this.name = name;
-        this.photoUri = photoUri;
-        this.phoneNumbers = new ArrayList<>();
-        this.phoneNumbers.add(phoneNumber);
+    constructor(name: String, phoneNumber: String, photoUri: String?) {
+        this.name = name
+        this.photoUri = photoUri
+        phoneNumbers = ArrayList()
+        phoneNumbers.add(phoneNumber)
     }
 
     /**
@@ -119,14 +144,13 @@ public class Contact implements Serializable {
      * @param photoUri    the contact's image
      */
     @Ignore
-    public Contact(long id, String name, @NonNull String phoneNumber, @Nullable String photoUri) {
-        this.contactId = id;
-        this.name = name;
-        this.photoUri = photoUri;
-        this.phoneNumbers = new ArrayList<>();
-        this.phoneNumbers.add(phoneNumber);
+    constructor(id: Long, name: String, phoneNumber: String, photoUri: String?) {
+        contactId = id
+        this.name = name
+        this.photoUri = photoUri
+        phoneNumbers = ArrayList()
+        phoneNumbers.add(phoneNumber)
     }
-
 
     /**
      * Contact constructor
@@ -135,143 +159,50 @@ public class Contact implements Serializable {
      * @param cursor
      */
     @Ignore
-    public Contact(Cursor cursor) {
-        this.contactId = cursor.getLong(cursor.getColumnIndex(COLUMN_ID));
-        this.name = cursor.getString(cursor.getColumnIndex(COLUMN_NAME));
-        this.photoUri = cursor.getString(cursor.getColumnIndex(COLUMN_THUMBNAIL));
-        this.phoneNumbers = new ArrayList<>();
-        this.phoneNumbers.add(cursor.getString(cursor.getColumnIndex(COLUMN_NUMBER)));
-        this.isFavorite = "1".equals(cursor.getString(cursor.getColumnIndex(COLUMN_STARRED)));
-    }
-
-    /**
-     * Returns the contact's id
-     *
-     * @return the contact's id
-     */
-    public long getContactId() {
-        return contactId;
-    }
-
-    /**
-     * Returns the contact's name
-     *
-     * @return String of the name
-     */
-    @NonNull
-    public String getName() {
-        return this.name;
+    constructor(cursor: Cursor) {
+        contactId = cursor.getLong(cursor.getColumnIndex(ContactsCursorLoader.COLUMN_ID))
+        name = cursor.getString(cursor.getColumnIndex(ContactsCursorLoader.COLUMN_NAME))
+        photoUri = cursor.getString(cursor.getColumnIndex(ContactsCursorLoader.COLUMN_THUMBNAIL))
+        phoneNumbers = ArrayList()
+        phoneNumbers.add(cursor.getString(cursor.getColumnIndex(ContactsCursorLoader.COLUMN_NUMBER)))
+        isFavorite = "1" == cursor.getString(cursor.getColumnIndex(ContactsCursorLoader.COLUMN_STARRED))
     }
 
     /**
      * Returns all the phone numbers of a contact
      *
      * @return List<String>
-     */
-    @NonNull
-    public List<String> getPhoneNumbers() {
-        return phoneNumbers;
-    }
+    </String> */
+    fun getPhoneNumbers(): List<String?> {
+        return phoneNumbers
+    }// The number cant be decoded so its probably not needed anyway// Try decoding it just in case
 
     /**
      * Returns the contact's main phone number
      *
      * @return String
      */
-    public String getMainPhoneNumber() {
-        if (phoneNumbers.isEmpty()) return null;
-        String phoneNumber = phoneNumbers.get(0);
+    val mainPhoneNumber: String?
+        get() {
+            if (phoneNumbers.isEmpty()) return null
+            var phoneNumber = phoneNumbers[0]
 
-        // Try decoding it just in case
-        try {
-            phoneNumber = java.net.URLDecoder.decode(phoneNumber, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            // The number cant be decoded so its probably not needed anyway
+            // Try decoding it just in case
+            try {
+                phoneNumber = URLDecoder.decode(phoneNumber, "UTF-8")
+            } catch (e: UnsupportedEncodingException) {
+                // The number cant be decoded so its probably not needed anyway
+            }
+            return phoneNumber
         }
-
-        return phoneNumber;
-    }
-
-    /**
-     * Returns the contact's image (Uri)
-     *
-     * @return String
-     */
-    public String getPhotoUri() {
-        return photoUri;
-    }
-
-    /**
-     * Returns the contact's list id
-     *
-     * @return long
-     */
-    public long getListId() {
-        return listId;
-    }
-
-    /**
-     * Returns wither the contact is a favorite contact
-     *
-     * @return
-     */
-    public boolean getIsFavorite() {
-        return isFavorite;
-    }
-
-    /**
-     * Sets the contact's id by a given id
-     *
-     * @param contactId
-     */
-    public void setContactId(long contactId) {
-        this.contactId = contactId;
-    }
-
-    /**
-     * Sets the contact's name by a given String
-     *
-     * @param name
-     */
-    public void setName(@NonNull String name) {
-        this.name = name;
-    }
 
     /**
      * Sets the contact's phone numbers by a given list of strings
      *
      * @param phoneNumbers
      */
-    public void setPhoneNumbers(@NonNull List<String> phoneNumbers) {
-        this.phoneNumbers = phoneNumbers;
-    }
-
-    /**
-     * Sets the contact's image by a given image (String)
-     *
-     * @param photoUri
-     */
-    public void setPhotoUri(String photoUri) {
-        this.photoUri = photoUri;
-    }
-
-    /**
-     * Sets the contact's list id by a given number
-     *
-     * @param listId
-     */
-    public void setListId(long listId) {
-        this.listId = listId;
-    }
-
-    /**
-     * Makes the contact favorite/not favorite
-     *
-     * @param isFavorite
-     * @return
-     */
-    public void setIsFavorite(boolean isFavorite) {
-        this.isFavorite = isFavorite;
+    fun setPhoneNumbers(phoneNumbers: MutableList<String?>) {
+        this.phoneNumbers = phoneNumbers
     }
 
     /**
@@ -279,10 +210,8 @@ public class Contact implements Serializable {
      *
      * @return a string representing the contact
      */
-    @NonNull
-    @Override
-    public String toString() {
-        return String.format(Utilities.sLocale, "id: %d, list_id: %d, name: %s, numbers: %s", contactId, listId, name, this.phoneNumbers.toString());
+    override fun toString(): String {
+        return String.format(Utilities.sLocale, "id: %d, list_id: %d, name: %s, numbers: %s", contactId, listId, name, phoneNumbers.toString())
     }
 
     /**
@@ -291,11 +220,10 @@ public class Contact implements Serializable {
      * @param obj
      * @return boolean is equals / not
      */
-    @Override
-    public boolean equals(@Nullable Object obj) {
-        if (super.equals(obj)) return true;
-        if (!(obj instanceof Contact)) return false;
-        Contact c = (Contact) obj;
-        return (name.equals(c.getName()) && phoneNumbers.equals(c.getPhoneNumbers()));
+    override fun equals(obj: Any?): Boolean {
+        if (super.equals(obj)) return true
+        if (obj !is Contact) return false
+        val c = obj
+        return name == c.name && phoneNumbers == c.getPhoneNumbers()
     }
 }

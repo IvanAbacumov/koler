@@ -1,7 +1,7 @@
-package com.chooloo.www.callmanager.listener;
+package com.chooloo.www.callmanager.listener
 
-import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.RecyclerView
 
-public interface OnItemClickListener {
-    void onItemClick(RecyclerView.ViewHolder holder, Object data);
+interface OnItemClickListener {
+    fun onItemClick(holder: RecyclerView.ViewHolder?, data: Any?)
 }

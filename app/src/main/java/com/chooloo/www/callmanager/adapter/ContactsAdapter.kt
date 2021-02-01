@@ -1,158 +1,125 @@
-package com.chooloo.www.callmanager.adapter;
+package com.chooloo.www.callmanager.adapter
 
-import android.content.Context;
-import android.database.Cursor;
-import android.net.Uri;
-import android.provider.ContactsContract;
-import android.util.ArrayMap;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
+import android.content.Context
+import android.database.Cursor
+import android.net.Uri
+import android.provider.ContactsContract
+import android.util.ArrayMap
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import com.chooloo.www.callmanager.R
+import com.chooloo.www.callmanager.cursorloader.FavoritesAndContactsLoader
+import com.chooloo.www.callmanager.database.entity.Contact
+import com.chooloo.www.callmanager.listener.OnItemClickListener
+import com.chooloo.www.callmanager.listener.OnItemLongClickListener
+import com.chooloo.www.callmanager.ui.ListItemHolder
+import com.chooloo.www.callmanager.util.PhoneNumberUtils
+import timber.log.Timber
 
-import androidx.annotation.NonNull;
-
-import com.chooloo.www.callmanager.R;
-import com.chooloo.www.callmanager.listener.OnItemClickListener;
-import com.chooloo.www.callmanager.listener.OnItemLongClickListener;
-import com.chooloo.www.callmanager.database.entity.Contact;
-import com.chooloo.www.callmanager.cursorloader.FavoritesAndContactsLoader;
-import com.chooloo.www.callmanager.ui.ListItemHolder;
-import com.chooloo.www.callmanager.util.PhoneNumberUtils;
-import com.chooloo.www.callmanager.util.Utilities;
-import com.google.i18n.phonenumbers.PhoneNumberUtil;
-
-import timber.log.Timber;
-
-public class ContactsAdapter extends AbsFastScrollerAdapter<ListItemHolder> {
-
-    // Click listeners
-    private OnItemClickListener mOnItemClickListener;
-    private OnItemLongClickListener mOnItemLongClickListener;
-    private OnContactSelectedListener mOnContactSelectedListener;
-
-    private final ArrayMap<ListItemHolder, Integer> holderMap = new ArrayMap<>();
+class ContactsAdapter
+/**
+ * Constructor
+ *
+ * @param context
+ * @param cursor
+ */(context: Context?,
+    cursor: Cursor?,
+        // Click listeners
+    private val mOnItemClickListener: OnItemClickListener?,
+    private val mOnItemLongClickListener: OnItemLongClickListener?) : AbsFastScrollerAdapter<ListItemHolder>(context, cursor) {
+    private var mOnContactSelectedListener: OnContactSelectedListener? = null
+    private val holderMap = ArrayMap<ListItemHolder, Int>()
 
     // List of contact sublist mHeaders
-    private String[] mHeaders = new String[0];
+    private var mHeaders: Array<String?>? = arrayOfNulls(0)
+
     // Number of contacts that correspond to each mHeader in {@code mHeaders}.
-    private int[] mCounts = new int[0];
-
-    /**
-     * Constructor
-     *
-     * @param context
-     * @param cursor
-     */
-    public ContactsAdapter(Context context,
-                           Cursor cursor,
-                           OnItemClickListener onItemClickListener,
-                           OnItemLongClickListener onItemLongClickListener) {
-        super(context, cursor);
-        mOnItemClickListener = onItemClickListener;
-        mOnItemLongClickListener = onItemLongClickListener;
+    private var mCounts: IntArray? = IntArray(0)
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ListItemHolder {
+        val v = LayoutInflater.from(mContext).inflate(R.layout.list_item, parent, false)
+        return ListItemHolder(v)
     }
 
-    @NonNull
-    @Override
-    public ListItemHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View v = LayoutInflater.from(mContext).inflate(R.layout.list_item, parent, false);
-        return new ListItemHolder(v);
-    }
-
-    @Override
-    public void onBindViewHolder(ListItemHolder viewHolder, Cursor cursor) {
+    override fun onBindViewHolder(viewHolder: ListItemHolder, cursor: Cursor?) {
 
         // get the contact from the cursor
-        Contact contact = new Contact(cursor);
+        val contact = Contact(cursor)
 
         // some settings
-        int position = cursor.getPosition();
-        String header = getHeaderString(position);
-        holderMap.put(viewHolder, position);
+        val position = cursor!!.position
+        val header = getHeaderString(position)
+        holderMap[viewHolder] = position
 
         // set texts
-        viewHolder.bigText.setText(contact.getName());
-        viewHolder.smallText.setText(PhoneNumberUtils.formatPhoneNumber(mContext, contact.getMainPhoneNumber()));
+        viewHolder.bigText.text = contact.name
+        viewHolder.smallText.text = PhoneNumberUtils.formatPhoneNumber(mContext, contact.mainPhoneNumber)
 
         // set header
-        boolean showHeader = position == 0 || !header.equals(getHeaderString(position - 1));
-        viewHolder.header.setText(header);
-        viewHolder.header.setVisibility(showHeader ? View.VISIBLE : View.INVISIBLE);
+        val showHeader = position == 0 || header != getHeaderString(position - 1)
+        viewHolder.header.text = header
+        viewHolder.header.visibility = if (showHeader) View.VISIBLE else View.INVISIBLE
 
         // set photo
-        if (contact.getPhotoUri() == null) {
-            viewHolder.photo.setVisibility(View.GONE);
-            viewHolder.photoPlaceholder.setVisibility(View.VISIBLE);
+        if (contact.photoUri == null) {
+            viewHolder.photo.visibility = View.GONE
+            viewHolder.photoPlaceholder.visibility = View.VISIBLE
         } else {
-            viewHolder.photo.setVisibility(View.VISIBLE);
-            viewHolder.photoPlaceholder.setVisibility(View.GONE);
-            viewHolder.photo.setImageURI(Uri.parse(contact.getPhotoUri()));
+            viewHolder.photo.visibility = View.VISIBLE
+            viewHolder.photoPlaceholder.visibility = View.GONE
+            viewHolder.photo.setImageURI(Uri.parse(contact.photoUri))
         }
 
         // Set click listeners
-        if (mOnContactSelectedListener != null)
-            viewHolder.itemView.setOnClickListener(v -> mOnContactSelectedListener.onContactSelected(contact.getMainPhoneNumber()));
-
-        if (mOnItemClickListener != null)
-            viewHolder.itemView.setOnClickListener(v -> mOnItemClickListener.onItemClick(viewHolder, contact));
-
+        if (mOnContactSelectedListener != null) viewHolder.itemView.setOnClickListener { v: View? -> mOnContactSelectedListener!!.onContactSelected(contact.mainPhoneNumber) }
+        if (mOnItemClickListener != null) viewHolder.itemView.setOnClickListener { v: View? -> mOnItemClickListener.onItemClick(viewHolder, contact) }
         if (mOnItemLongClickListener != null) {
-            viewHolder.itemView.setOnLongClickListener(v -> {
-                mOnItemLongClickListener.onItemLongClick(viewHolder, contact);
-                return true;
-            });
-        }
-
-    }
-
-    @Override
-    public void changeCursor(Cursor cursor) {
-        super.changeCursor(cursor);
-
-        String[] tempHeaders = cursor.getExtras().getStringArray(ContactsContract.Contacts.EXTRA_ADDRESS_BOOK_INDEX_TITLES);
-        int[] tempCounts = cursor.getExtras().getIntArray(ContactsContract.Contacts.EXTRA_ADDRESS_BOOK_INDEX_COUNTS);
-        int favoritesCount = cursor.getExtras().getInt(FavoritesAndContactsLoader.FAVORITES_COUNT);
-
-        if (favoritesCount == 0) {
-            mHeaders = tempHeaders;
-            mCounts = tempCounts;
-        } else {
-            mHeaders = new String[(tempHeaders != null ? tempHeaders.length : 0) + 1];
-            mHeaders[0] = "★";
-            System.arraycopy(tempHeaders, 0, mHeaders, 1, mHeaders.length - 1);
-
-            mCounts = new int[tempCounts.length + 1];
-            mCounts[0] = favoritesCount;
-            System.arraycopy(tempCounts, 0, mCounts, 1, mCounts.length - 1);
-
-            if (mCounts != null) {
-                int sum = 0;
-                for (int count : mCounts) sum += count;
-                if (sum != cursor.getCount())
-                    Timber.e("Count sum (%d) != mCursor count (%d).", sum, cursor.getCount());
+            viewHolder.itemView.setOnLongClickListener { v: View? ->
+                mOnItemLongClickListener.onItemLongClick(viewHolder, contact)
+                true
             }
         }
     }
 
-    @Override
-    public String getHeaderString(int position) {
-        int index = -1;
-        int sum = 0;
-        while (sum <= position) {
-            if (index + 1 >= mCounts.length) return "?"; // index is bigger than headers list size
-            sum += mCounts[++index];
+    override fun changeCursor(cursor: Cursor) {
+        super.changeCursor(cursor)
+        val tempHeaders = cursor.extras.getStringArray(ContactsContract.Contacts.EXTRA_ADDRESS_BOOK_INDEX_TITLES)
+        val tempCounts = cursor.extras.getIntArray(ContactsContract.Contacts.EXTRA_ADDRESS_BOOK_INDEX_COUNTS)
+        val favoritesCount = cursor.extras.getInt(FavoritesAndContactsLoader.FAVORITES_COUNT)
+        if (favoritesCount == 0) {
+            mHeaders = tempHeaders
+            mCounts = tempCounts
+        } else {
+            mHeaders = arrayOfNulls((tempHeaders?.size ?: 0) + 1)
+            mHeaders!![0] = "★"
+            System.arraycopy(tempHeaders!!, 0, mHeaders, 1, mHeaders!!.size - 1)
+            mCounts = IntArray(tempCounts!!.size + 1)
+            mCounts!![0] = favoritesCount
+            System.arraycopy(tempCounts, 0, mCounts, 1, mCounts!!.size - 1)
+            if (mCounts != null) {
+                var sum = 0
+                for (count in mCounts!!) sum += count
+                if (sum != cursor.count) Timber.e("Count sum (%d) != mCursor count (%d).", sum, cursor.count)
+            }
         }
-        return mHeaders[index];
     }
 
-    @Override
-    public void refreshHeaders() {
-        for (ListItemHolder holder : holderMap.keySet()) {
-            int position = holderMap.get(holder);
-            boolean showHeader =
-                    position == 0 || !getHeaderString(position).equals(getHeaderString(position - 1));
-            int visibility = showHeader ? View.VISIBLE : View.INVISIBLE;
-            holder.header.setVisibility(visibility);
+    override fun getHeaderString(position: Int): String? {
+        var index = -1
+        var sum = 0
+        while (sum <= position) {
+            if (index + 1 >= mCounts!!.size) return "?" // index is bigger than headers list size
+            sum += mCounts!![++index]
+        }
+        return mHeaders!![index]
+    }
+
+    override fun refreshHeaders() {
+        for (holder in holderMap.keys) {
+            val position = holderMap[holder]!!
+            val showHeader = position == 0 || getHeaderString(position) != getHeaderString(position - 1)
+            val visibility = if (showHeader) View.VISIBLE else View.INVISIBLE
+            holder.header.visibility = visibility
         }
     }
 
@@ -161,14 +128,14 @@ public class ContactsAdapter extends AbsFastScrollerAdapter<ListItemHolder> {
      *
      * @param onContactSelectedListener
      */
-    public void setOnContactSelectedListener(OnContactSelectedListener onContactSelectedListener) {
-        mOnContactSelectedListener = onContactSelectedListener;
+    fun setOnContactSelectedListener(onContactSelectedListener: OnContactSelectedListener?) {
+        mOnContactSelectedListener = onContactSelectedListener
     }
 
     /**
      * The interface for the onContactSelectedListener
      */
-    public interface OnContactSelectedListener {
-        void onContactSelected(String normPhoneNumber);
+    interface OnContactSelectedListener {
+        fun onContactSelected(normPhoneNumber: String?)
     }
 }

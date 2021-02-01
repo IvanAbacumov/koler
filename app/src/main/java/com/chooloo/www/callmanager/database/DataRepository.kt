@@ -1,107 +1,91 @@
-package com.chooloo.www.callmanager.database;
+package com.chooloo.www.callmanager.database
 
-import android.os.Process;
+import android.os.Process
+import androidx.lifecycle.LiveData
+import com.chooloo.www.callmanager.database.entity.CGroup
+import com.chooloo.www.callmanager.database.entity.CGroupAndItsContacts
+import com.chooloo.www.callmanager.database.entity.Contact
+import com.chooloo.www.callmanager.util.Utilities
 
-import androidx.lifecycle.LiveData;
-
-import com.chooloo.www.callmanager.database.entity.CGroup;
-import com.chooloo.www.callmanager.database.entity.CGroupAndItsContacts;
-import com.chooloo.www.callmanager.database.entity.Contact;
-import com.chooloo.www.callmanager.util.Utilities;
-
-import java.util.List;
-
-public class DataRepository {
-
-    private static DataRepository sInstance;
-
-    private final AppDatabase mDatabase;
-
-    public static DataRepository getInstance(final AppDatabase database) {
-        if (sInstance == null) {
-            synchronized (DataRepository.class) {
-                if (sInstance == null) {
-                    sInstance = new DataRepository(database);
-                }
-            }
-        }
-        return sInstance;
-    }
-
-    private DataRepository(final AppDatabase database) {
-        mDatabase = database;
-    }
-
+class DataRepository private constructor(private val mDatabase: AppDatabase) {
     // - Insert - //
-
-    public long[] insertCGroups(CGroup... cGroup) {
-        if (Utilities.isInUIThread()) {
+    fun insertCGroups(vararg cGroup: CGroup?): LongArray? {
+        return if (Utilities.isInUIThread()) {
             //TODO start in thread
-            return null;
+            null
         } else {
-            return mDatabase.getCGroupDao().insert(cGroup);
+            mDatabase.cGroupDao!!.insert(*cGroup)
         }
     }
 
-    public void insertContacts(List<Contact> contacts) {
+    fun insertContacts(contacts: List<Contact?>?) {
         if (Utilities.isInUIThread()) {
             //TODO start in thread
         } else {
-            mDatabase.getContactDao().insert(contacts);
+            mDatabase.contactDao!!.insert(contacts)
         }
     }
 
     // - Update - //
-
-    public void update(Contact... contacts) {
-        Thread thread = new Thread(() -> {
-            Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
-            mDatabase.getContactDao().update(contacts);
-        });
-        thread.start();
+    fun update(vararg contacts: Contact?) {
+        val thread = Thread {
+            Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND)
+            mDatabase.contactDao!!.update(*contacts)
+        }
+        thread.start()
     }
 
     // - Delete - //
-
-    public void deleteContact(long contactId) {
-        Thread thread = new Thread(() -> {
-            Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
-            mDatabase.getContactDao().deleteById(contactId);
-        });
-        thread.start();
+    fun deleteContact(contactId: Long) {
+        val thread = Thread {
+            Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND)
+            mDatabase.contactDao!!.deleteById(contactId)
+        }
+        thread.start()
     }
 
-    public void deleteCGroup(long listId) {
-        Thread thread = new Thread(() -> {
-            Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
-            mDatabase.getCGroupDao().deleteById(listId);
-        });
-        thread.start();
+    fun deleteCGroup(listId: Long) {
+        val thread = Thread {
+            Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND)
+            mDatabase.cGroupDao!!.deleteById(listId)
+        }
+        thread.start()
     }
 
     // - Query - //
+    val allContacts: LiveData<List<Contact?>?>?
+        get() = mDatabase.contactDao!!.allContacts
 
-    public LiveData<List<Contact>> getAllContacts() {
-        return mDatabase.getContactDao().getAllContacts();
+    fun getContactsInList(list: CGroup): LiveData<List<Contact?>?>? {
+        return mDatabase.contactDao!!.getContactsInList(list.listId)
     }
 
-    public LiveData<List<Contact>> getContactsInList(CGroup list) {
-        return mDatabase.getContactDao().getContactsInList(list.getListId());
+    fun getContactsInList(listId: Long): LiveData<List<Contact?>?>? {
+        return mDatabase.contactDao!!.getContactsInList(listId)
     }
 
-    public LiveData<List<Contact>> getContactsInList(long listId) {
-        return mDatabase.getContactDao().getContactsInList(listId);
+    val allCGroups: LiveData<List<CGroup?>?>?
+        get() = mDatabase.cGroupDao!!.allCGroups
+
+    fun getCGroup(listId: Long): LiveData<List<CGroup?>?>? {
+        return mDatabase.cGroupDao!!.getCGroupById(listId)
     }
 
-    public LiveData<List<CGroup>> getAllCGroups() {
-        return mDatabase.getCGroupDao().getAllCGroups();
-    }
+    val allCGroupsAndTheirContacts: LiveData<List<CGroupAndItsContacts?>?>?
+        get() = mDatabase.cGroupAndItsContactsDao!!.allCGroupsAndTheirContacts
 
-    public LiveData<List<CGroup>> getCGroup(long listId) {
-        return mDatabase.getCGroupDao().getCGroupById(listId);
-    }
-
-    public LiveData<List<CGroupAndItsContacts>> getAllCGroupsAndTheirContacts() {
-        return mDatabase.getCGroupAndItsContactsDao().getAllCGroupsAndTheirContacts();
+    companion object {
+        private var sInstance: DataRepository? = null
+        @JvmStatic
+        fun getInstance(database: AppDatabase): DataRepository? {
+            if (sInstance == null) {
+                synchronized(DataRepository::class.java) {
+                    if (sInstance == null) {
+                        sInstance = DataRepository(database)
+                    }
+                }
+            }
+            return sInstance
+        }
     }
 }

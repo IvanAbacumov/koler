@@ -1,122 +1,106 @@
-package com.chooloo.www.callmanager.listener;
+package com.chooloo.www.callmanager.listener
 
-import android.content.Context;
-import android.view.GestureDetector;
-import android.view.MotionEvent;
-import android.view.View;
+import android.content.Context
+import android.view.GestureDetector
+import android.view.GestureDetector.SimpleOnGestureListener
+import android.view.MotionEvent
+import android.view.View
+import android.view.View.OnTouchListener
 
-public class AllPurposeTouchListener implements View.OnTouchListener {
-
+open class AllPurposeTouchListener(ctx: Context?) : OnTouchListener {
     // Constants
-    private final GestureDetector mGestureDetector;
-    private final GestureListener mGestureListener;
-
-    /**
-     * Constructor
-     *
-     * @param ctx
-     */
-    public AllPurposeTouchListener(Context ctx) {
-        mGestureListener = new GestureListener();
-        mGestureDetector = new GestureDetector(ctx, mGestureListener);
+    private val mGestureDetector: GestureDetector
+    private val mGestureListener: GestureListener
+    override fun onTouch(v: View, event: MotionEvent): Boolean {
+        mGestureListener.setView(v)
+        return mGestureDetector.onTouchEvent(event)
     }
 
-    @Override
-    public boolean onTouch(View v, MotionEvent event) {
-        mGestureListener.setView(v);
-        return mGestureDetector.onTouchEvent(event);
-    }
-
-    private final class GestureListener extends GestureDetector.SimpleOnGestureListener {
-
-        // Constants
-        private static final int SWIPE_THRESHOLD = 100;
-        private static final int SWIPE_VELOCITY_THRESHOLD = 100;
-
-        private View mView;
-
-        @Override
-        public boolean onDown(MotionEvent e) {
-            return true;
+    private inner class GestureListener : SimpleOnGestureListener() {
+        private var mView: View? = null
+        override fun onDown(e: MotionEvent): Boolean {
+            return true
         }
 
-        @Override
-        public boolean onSingleTapConfirmed(MotionEvent e) {
-            return AllPurposeTouchListener.this.onSingleTapConfirmed(mView);
+        override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
+            return this@AllPurposeTouchListener.onSingleTapConfirmed(mView)
         }
 
-        @Override
-        public boolean onSingleTapUp(MotionEvent e) {
-            return AllPurposeTouchListener.this.onSingleTapUp(mView);
+        override fun onSingleTapUp(e: MotionEvent): Boolean {
+            return this@AllPurposeTouchListener.onSingleTapUp(mView)
         }
 
-        @Override
-        public void onLongPress(MotionEvent e) {
-            AllPurposeTouchListener.this.onLongPress(mView);
+        override fun onLongPress(e: MotionEvent) {
+            this@AllPurposeTouchListener.onLongPress(mView)
         }
 
-        @Override
-        public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-
-            boolean result = false;
-
+        override fun onFling(e1: MotionEvent, e2: MotionEvent, velocityX: Float, velocityY: Float): Boolean {
+            var result = false
             try {
 
                 // The difference in the Y position
-                float diffY = e2.getY() - e1.getY();
+                val diffY = e2.y - e1.y
                 // The difference in the X position
-                float diffX = e2.getX() - e1.getX();
-
+                val diffX = e2.x - e1.x
                 if (Math.abs(diffX) > Math.abs(diffY)) {
                     // The fling is horizontal
-                    if (Math.abs(diffX) > SWIPE_THRESHOLD && Math.abs(velocityX) > SWIPE_VELOCITY_THRESHOLD) {
+                    if (Math.abs(diffX) > Companion.SWIPE_THRESHOLD && Math.abs(velocityX) > Companion.SWIPE_VELOCITY_THRESHOLD) {
                         // The fling is actually a fling
                         if (diffX > 0) {
                             // The fling is to the right (the difference in the position is positive)
-                            onSwipeRight();
+                            onSwipeRight()
                         } else {
                             // The fling is to the left (the difference in the position is negative)
-                            onSwipeLeft();
+                            onSwipeLeft()
                         }
-                        result = true;
+                        result = true
                     }
-                } else if (Math.abs(diffY) > SWIPE_THRESHOLD && Math.abs(velocityY) > SWIPE_VELOCITY_THRESHOLD) {
+                } else if (Math.abs(diffY) > Companion.SWIPE_THRESHOLD && Math.abs(velocityY) > Companion.SWIPE_VELOCITY_THRESHOLD) {
                     // The fling is vertical and is actually a fling
                     if (diffY > 0) {
                         // The fling is downwards
-                        onSwipeBottom();
+                        onSwipeBottom()
                     } else {
                         // The fling is upwards
-                        onSwipeTop();
+                        onSwipeTop()
                     }
-                    result = true;
+                    result = true
                 }
-
-            } catch (Exception exception) {
-                exception.printStackTrace();
+            } catch (exception: Exception) {
+                exception.printStackTrace()
             }
-
-            return result;
-
+            return result
         }
 
-        public void setView(View view) {
-            mView = view;
+        fun setView(view: View?) {
+            mView = view
         }
+
+
+
+
+    }
+
+    companion object {
+
+        // Constants
+        private const val SWIPE_THRESHOLD = 100
+        private const val SWIPE_VELOCITY_THRESHOLD = 100
     }
 
     /**
      * Notified when a single-tap occurs.
-     * <p>
-     * Unlike {@link #onSingleTapUp(View)}, this
+     *
+     *
+     * Unlike [.onSingleTapUp], this
      * will only be called after the detector is confident that the user's
      * first tap is not followed by a second tap leading to a double-tap
      * gesture.
      *
      * @param v The view the tap occurred on.
      */
-    public boolean onSingleTapConfirmed(View v) {
-        return false;
+    fun onSingleTapConfirmed(v: View?): Boolean {
+        return false
     }
 
     /**
@@ -124,34 +108,39 @@ public class AllPurposeTouchListener implements View.OnTouchListener {
      *
      * @param v The view the tap occurred on.
      */
-    public boolean onSingleTapUp(View v) {
-        return false;
+    fun onSingleTapUp(v: View?): Boolean {
+        return false
     }
 
-    public void onLongPress(View v) {
-    }
+    fun onLongPress(v: View?) {}
 
     /**
      * If the user swipes right
      */
-    public void onSwipeRight() {
-    }
+    open fun onSwipeRight() {}
 
     /**
      * If the user swipes left
      */
-    public void onSwipeLeft() {
-    }
+    open fun onSwipeLeft() {}
 
     /**
      * If the user swipes up
      */
-    public void onSwipeTop() {
-    }
+    open fun onSwipeTop() {}
 
     /**
      * Guess what? if the user swipes down
      */
-    public void onSwipeBottom() {
+    open fun onSwipeBottom() {}
+
+    /**
+     * Constructor
+     *
+     * @param ctx
+     */
+    init {
+        mGestureListener = GestureListener()
+        mGestureDetector = GestureDetector(ctx, mGestureListener)
     }
 }

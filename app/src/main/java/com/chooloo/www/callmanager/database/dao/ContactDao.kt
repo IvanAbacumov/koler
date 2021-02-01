@@ -1,42 +1,38 @@
-package com.chooloo.www.callmanager.database.dao;
+package com.chooloo.www.callmanager.database.dao
 
-import androidx.lifecycle.LiveData;
-import androidx.room.Dao;
-import androidx.room.Insert;
-import androidx.room.Query;
-import androidx.room.Update;
-
-import com.chooloo.www.callmanager.database.entity.Contact;
-
-import java.util.List;
+import androidx.lifecycle.LiveData
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.Query
+import androidx.room.Update
+import com.chooloo.www.callmanager.database.entity.Contact
 
 @Dao
-public interface ContactDao {
+interface ContactDao {
+    @Insert
+    fun insert(vararg contacts: Contact?)
 
     @Insert
-    void insert(Contact... contacts);
-
-    @Insert
-    void insert(List<Contact> contacts);
+    fun insert(contacts: List<Contact?>?)
 
     @Update
-    void update(Contact... contacts);
+    fun update(vararg contacts: Contact?)
 
     @Query("DELETE FROM contact_table")
-    void deleteAll();
+    fun deleteAll()
 
     @Query("DELETE FROM contact_table WHERE phone_numbers LIKE '%' || :phoneNumber || '%'")
-    int deleteByPhoneNumber(String phoneNumber);
+    fun deleteByPhoneNumber(phoneNumber: String?): Int
 
     @Query("DELETE FROM contact_table WHERE contact_id = :id")
-    int deleteById(long id);
+    fun deleteById(id: Long): Int
 
     @Query("SELECT * from contact_table WHERE phone_numbers LIKE '%' || :phoneNumber || '%'")
-    LiveData<List<Contact>> getContactsByPhoneNumber(String phoneNumber);
+    fun getContactsByPhoneNumber(phoneNumber: String?): LiveData<List<Contact?>?>?
 
-    @Query("SELECT * from contact_table ORDER BY contact_id ASC")
-    LiveData<List<Contact>> getAllContacts();
+    @get:Query("SELECT * from contact_table ORDER BY contact_id ASC")
+    val allContacts: LiveData<List<Contact?>?>?
 
     @Query("SELECT * from contact_table WHERE list_id LIKE :listId")
-    LiveData<List<Contact>> getContactsInList(long listId);
+    fun getContactsInList(listId: Long): LiveData<List<Contact?>?>?
 }

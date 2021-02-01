@@ -14,74 +14,37 @@
  * limitations under the License.
  *
  */
+package com.chooloo.www.callmanager.adapter
 
-package com.chooloo.www.callmanager.adapter;
-
-import android.content.Context;
-import android.database.Cursor;
-import android.database.DataSetObserver;
-import android.provider.ContactsContract;
-
-import androidx.recyclerview.widget.RecyclerView;
-
-import com.chooloo.www.callmanager.database.entity.Contact;
+import android.content.Context
+import android.database.Cursor
+import android.database.DataSetObserver
+import android.provider.ContactsContract
+import androidx.recyclerview.widget.RecyclerView
 
 /**
  * Created by skyfishjy on 10/31/14.
  */
-
-public abstract class AbsCursorRecyclerViewAdapter<VH extends RecyclerView.ViewHolder> extends RecyclerView.Adapter<VH> {
-
-    protected Context mContext;
-
-    private Cursor mCursor;
-
-    private boolean mDataValid;
-
-    private int mRowIdColumn;
-
-    private DataSetObserver mDataSetObserver;
-
-    public abstract void onBindViewHolder(VH viewHolder, Cursor cursor);
-
-    /**
-     * Constructor
-     *
-     * @param context
-     * @param cursor
-     */
-    public AbsCursorRecyclerViewAdapter(Context context, Cursor cursor) {
-        mContext = context;
-        mCursor = cursor;
-        mDataValid = cursor != null;
-
-        try {
-            mRowIdColumn = mDataValid ? mCursor.getColumnIndex(ContactsContract.Contacts._ID) : -1;
-        } catch (IllegalArgumentException e) {
-            mRowIdColumn = mDataValid ? mCursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.CONTACT_ID) : -1;
-        }
-
-        mDataSetObserver = new NotifyingDataSetObserver();
-        if (mCursor != null) mCursor.registerDataSetObserver(mDataSetObserver);
-    }
-
-    /**
-     * Returns the cursor
-     *
-     * @return
-     */
-    public Cursor getCursor() {
-        return mCursor;
-    }
+abstract class AbsCursorRecyclerViewAdapter<VH : RecyclerView.ViewHolder?>(protected var mContext: Context,
+                                                                           /**
+                                                                            * Returns the cursor
+                                                                            *
+                                                                            * @return
+                                                                            */
+                                                                           var cursor: Cursor?
+) : RecyclerView.Adapter<VH>() {
+    private var mDataValid: Boolean
+    private var mRowIdColumn = 0
+    private val mDataSetObserver: DataSetObserver?
+    abstract fun onBindViewHolder(viewHolder: VH, cursor: Cursor?)
 
     /**
      * Returns the cursors counts
      *
      * @return
      */
-    @Override
-    public int getItemCount() {
-        return mDataValid && mCursor != null ? mCursor.getCount() : 0;
+    override fun getItemCount(): Int {
+        return if (mDataValid && cursor != null) cursor!!.count else 0
     }
 
     /**
@@ -90,82 +53,86 @@ public abstract class AbsCursorRecyclerViewAdapter<VH extends RecyclerView.ViewH
      * @param position
      * @return
      */
-    @Override
-    public long getItemId(int position) {
-        if (mDataValid && mCursor != null && mCursor.moveToPosition(position))
-            return mCursor.getLong(mRowIdColumn);
-        return 0;
+    override fun getItemId(position: Int): Long {
+        return if (mDataValid && cursor != null && cursor!!.moveToPosition(position)) cursor!!.getLong(mRowIdColumn) else 0
     }
 
-    @Override
-    public void setHasStableIds(boolean hasStableIds) {
-        super.setHasStableIds(true);
+    override fun setHasStableIds(hasStableIds: Boolean) {
+        super.setHasStableIds(true)
     }
 
-
-    @Override
-    public void onBindViewHolder(VH viewHolder, int position) {
-        if (!mDataValid)
-            throw new IllegalStateException("this should only be called when the cursor is valid");
-        if (!mCursor.moveToPosition(position))
-            throw new IllegalStateException("couldn't move cursor to position " + position);
-        onBindViewHolder(viewHolder, mCursor);
+    override fun onBindViewHolder(viewHolder: VH, position: Int) {
+        check(mDataValid) { "this should only be called when the cursor is valid" }
+        check(cursor!!.moveToPosition(position)) { "couldn't move cursor to position $position" }
+        onBindViewHolder(viewHolder, cursor)
     }
 
     /**
      * Change the underlying cursor to a new cursor. If there is an existing cursor it will be
      * closed.
      */
-    public void changeCursor(Cursor cursor) {
-        Cursor old = swapCursor(cursor);
-        if (old != null) old.close();
+    open fun changeCursor(cursor: Cursor) {
+        val old = swapCursor(cursor)
+        old?.close()
     }
 
     /**
      * Swap in a new Cursor, returning the old Cursor.  Unlike
-     * {@link #changeCursor(Cursor)}, the returned old Cursor is <em>not</em>
+     * [.changeCursor], the returned old Cursor is *not*
      * closed.
      */
-    private Cursor swapCursor(Cursor newCursor) {
-        if (newCursor == mCursor) return null; // cursor hasn't changed
-
-        final Cursor oldCursor = mCursor;
-        if (oldCursor != null && mDataSetObserver != null)
-            oldCursor.unregisterDataSetObserver(mDataSetObserver);
-
-        mCursor = newCursor;
-        if (mCursor != null) {
-            if (mDataSetObserver != null) mCursor.registerDataSetObserver(mDataSetObserver);
-            try {
-                mRowIdColumn = newCursor.getColumnIndexOrThrow(ContactsContract.Contacts._ID);
-            } catch (IllegalArgumentException e) {
-                mRowIdColumn = newCursor.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.Phone.CONTACT_ID);
+    private fun swapCursor(newCursor: Cursor): Cursor? {
+        if (newCursor === cursor) return null // cursor hasn't changed
+        val oldCursor = cursor
+        if (oldCursor != null && mDataSetObserver != null) oldCursor.unregisterDataSetObserver(mDataSetObserver)
+        cursor = newCursor
+        if (cursor != null) {
+            if (mDataSetObserver != null) cursor!!.registerDataSetObserver(mDataSetObserver)
+            mRowIdColumn = try {
+                newCursor.getColumnIndexOrThrow(ContactsContract.Contacts._ID)
+            } catch (e: IllegalArgumentException) {
+                newCursor.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.Phone.CONTACT_ID)
             }
-            mDataValid = true;
-            notifyDataSetChanged();
+            mDataValid = true
+            notifyDataSetChanged()
         } else {
-            mRowIdColumn = -1;
-            mDataValid = false;
-            notifyDataSetChanged();
+            mRowIdColumn = -1
+            mDataValid = false
+            notifyDataSetChanged()
             //There is no notifyDataSetInvalidated() method in RecyclerView.Adapter
         }
-        return oldCursor;
+        return oldCursor
     }
 
-    private class NotifyingDataSetObserver extends DataSetObserver {
-        @Override
-        public void onChanged() {
-            super.onChanged();
-            mDataValid = true;
-            notifyDataSetChanged();
+    private inner class NotifyingDataSetObserver : DataSetObserver() {
+        override fun onChanged() {
+            super.onChanged()
+            mDataValid = true
+            notifyDataSetChanged()
         }
 
-        @Override
-        public void onInvalidated() {
-            super.onInvalidated();
-            mDataValid = false;
-            notifyDataSetChanged();
+        override fun onInvalidated() {
+            super.onInvalidated()
+            mDataValid = false
+            notifyDataSetChanged()
             //There is no notifyDataSetInvalidated() method in RecyclerView.Adapter
         }
+    }
+
+    /**
+     * Constructor
+     *
+     * @param context
+     * @param cursor
+     */
+    init {
+        mDataValid = cursor != null
+        mRowIdColumn = try {
+            if (mDataValid) cursor!!.getColumnIndex(ContactsContract.Contacts._ID) else -1
+        } catch (e: IllegalArgumentException) {
+            if (mDataValid) cursor!!.getColumnIndex(ContactsContract.CommonDataKinds.Phone.CONTACT_ID) else -1
+        }
+        mDataSetObserver = NotifyingDataSetObserver()
+        if (cursor != null) cursor!!.registerDataSetObserver(mDataSetObserver)
     }
 }

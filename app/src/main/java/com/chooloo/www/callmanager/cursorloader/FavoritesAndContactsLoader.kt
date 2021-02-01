@@ -1,71 +1,46 @@
-package com.chooloo.www.callmanager.cursorloader;
+package com.chooloo.www.callmanager.cursorloader
 
-import android.content.Context;
-import android.database.Cursor;
-import android.database.MergeCursor;
-import android.database.sqlite.SQLiteException;
-import android.net.Uri;
-import android.os.Bundle;
-import android.provider.ContactsContract;
-import android.provider.ContactsContract.CommonDataKinds.Phone;
-
-import com.chooloo.www.callmanager.util.PermissionUtils;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import timber.log.Timber;
-
-import static android.Manifest.permission.READ_CONTACTS;
+import android.Manifest.permission
+import android.content.Context
+import android.database.Cursor
+import android.database.MergeCursor
+import android.database.sqlite.SQLiteException
+import android.net.Uri
+import android.os.Bundle
+import android.provider.ContactsContract
+import android.provider.ContactsContract.CommonDataKinds.Phone
+import com.chooloo.www.callmanager.util.PermissionUtils
+import timber.log.Timber
+import java.util.*
 
 /**
  * Extends the basic ContactsCursorLoader but also adds the favourite contacts to it
  */
-public class FavoritesAndContactsLoader extends ContactsCursorLoader {
-
-    public static final String FAVORITES_COUNT = "favorites_count";
-
-    private boolean mWithFavs = true;
-
-    /**
-     * Constructor
-     *
-     * @param context     calling context
-     * @param phoneNumber String
-     * @param contactName String
-     */
-    public FavoritesAndContactsLoader(Context context, String phoneNumber, String contactName, boolean withFavs) {
-        super(context, phoneNumber, contactName);
-        Timber.i("Creating contacts loader with " + phoneNumber + " : " + contactName);
-        this.mWithFavs = withFavs;
-    }
-
-    @Override
-    public Cursor loadInBackground() {
+class FavoritesAndContactsLoader(context: Context?, phoneNumber: String, contactName: String, withFavs: Boolean) : ContactsCursorLoader(context, phoneNumber, contactName) {
+    private var mWithFavs = true
+    override fun loadInBackground(): Cursor? {
         // get only contacts
-        final Cursor contactsCursor = loadContacts();
-
-        if (!mWithFavs) return contactsCursor;
+        val contactsCursor = loadContacts()
+        if (!mWithFavs) return contactsCursor
 
         // Handle favourites too
-        List<Cursor> cursors = new ArrayList<>();
-        final Cursor favoritesCursor = loadFavorites();
-        final int favoritesCount = favoritesCursor == null ? 0 : favoritesCursor.getCount();
+        val cursors: MutableList<Cursor?> = ArrayList()
+        val favoritesCursor = loadFavorites()
+        val favoritesCount = favoritesCursor?.count ?: 0
 
         // add the cursors
-        cursors.add(favoritesCursor);
-        cursors.add(contactsCursor);
+        cursors.add(favoritesCursor)
+        cursors.add(contactsCursor)
 
         // merge cursors
-        return new MergeCursor(cursors.toArray(new Cursor[0])) {
-            @Override
-            public Bundle getExtras() {
+        return object : MergeCursor(cursors.toTypedArray()) {
+            override fun getExtras(): Bundle {
                 // Need to get the extras from the contacts cursor.
-                Bundle extras = contactsCursor == null ? new Bundle() : contactsCursor.getExtras();
-                extras.putInt(FAVORITES_COUNT, favoritesCount);
-                return extras;
+                val extras = if (contactsCursor == null) Bundle() else contactsCursor.extras
+                extras.putInt(FAVORITES_COUNT, favoritesCount)
+                return extras
             }
-        };
+        }
     }
 
     /**
@@ -73,14 +48,18 @@ public class FavoritesAndContactsLoader extends ContactsCursorLoader {
      *
      * @return The contacts cursor
      */
-    private Cursor loadContacts() {
+    private fun loadContacts(): Cursor? {
         // ContactsCursor.loadInBackground() can return null; MergeCursor
         // correctly handles null cursors.
-        try {
-            return super.loadInBackground();
-        } catch (NullPointerException | SQLiteException | SecurityException e) {
+        return try {
+            super.loadInBackground()
+        } catch (e: NullPointerException) {
             // Ignore NPEs, SQLiteExceptions and SecurityExceptions thrown by providers
-            return null;
+            null
+        } catch (e: SQLiteException) {
+            null
+        } catch (e: SecurityException) {
+            null
         }
     }
 
@@ -89,26 +68,42 @@ public class FavoritesAndContactsLoader extends ContactsCursorLoader {
      *
      * @return The cursor containing the favorites
      */
-    private Cursor loadFavorites() {
-        PermissionUtils.checkPermissionsGranted(getContext(), new String[]{READ_CONTACTS}, true);
-        String selection = ContactsCursorLoader.COLUMN_STARRED + " = 1";
-        return getContext().getContentResolver().query(
+    private fun loadFavorites(): Cursor? {
+        PermissionUtils.checkPermissionsGranted(context, arrayOf(permission.READ_CONTACTS), true)
+        val selection = COLUMN_STARRED + " = 1"
+        return context.contentResolver.query(
                 buildFavoritesUri(),
-                getProjection(),
+                projection,
                 selection,
                 null,
-                getSortOrder());
+                sortOrder)
+    }
+
+    companion object {
+        const val FAVORITES_COUNT = "favorites_count"
+
+        /**
+         * Builds contact uri by given name and phone number
+         *
+         * @return Builder.build()
+         */
+        private fun buildFavoritesUri(): Uri {
+            val builder = Phone.CONTENT_URI.buildUpon()
+            builder.appendQueryParameter(ContactsContract.Contacts.EXTRA_ADDRESS_BOOK_INDEX, "true")
+            builder.appendQueryParameter(ContactsContract.REMOVE_DUPLICATE_ENTRIES, "true")
+            return builder.build()
+        }
     }
 
     /**
-     * Builds contact uri by given name and phone number
+     * Constructor
      *
-     * @return Builder.build()
+     * @param context     calling context
+     * @param phoneNumber String
+     * @param contactName String
      */
-    private static Uri buildFavoritesUri() {
-        Uri.Builder builder = Phone.CONTENT_URI.buildUpon();
-        builder.appendQueryParameter(ContactsContract.Contacts.EXTRA_ADDRESS_BOOK_INDEX, "true");
-        builder.appendQueryParameter(ContactsContract.REMOVE_DUPLICATE_ENTRIES, "true");
-        return builder.build();
+    init {
+        Timber.i("Creating contacts loader with $phoneNumber : $contactName")
+        mWithFavs = withFavs
     }
 }

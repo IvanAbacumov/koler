@@ -1,7 +1,7 @@
-package com.chooloo.www.callmanager.listener;
+package com.chooloo.www.callmanager.listener
 
-import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.RecyclerView
 
-public interface OnItemLongClickListener {
-    void onItemLongClick(RecyclerView.ViewHolder holder, Object data);
+interface OnItemLongClickListener {
+    fun onItemLongClick(holder: RecyclerView.ViewHolder?, data: Any?)
 }

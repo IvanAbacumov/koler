@@ -1,39 +1,32 @@
-package com.chooloo.www.callmanager.database.entity;
+package com.chooloo.www.callmanager.database.entity
 
-import android.content.Context;
-import android.database.Cursor;
+import android.content.Context
+import android.database.Cursor
+import android.provider.CallLog
+import android.text.format.DateFormat
+import com.chooloo.www.callmanager.cursorloader.RecentsCursorLoader
+import com.chooloo.www.callmanager.util.ContactUtils
+import timber.log.Timber
+import java.text.DateFormatSymbols
+import java.util.*
 
-import com.chooloo.www.callmanager.util.ContactUtils;
-
-import java.util.Date;
-
-import timber.log.Timber;
-
-import static android.provider.CallLog.Calls.*;
-import static com.chooloo.www.callmanager.cursorloader.RecentsCursorLoader.COLUMN_DATE;
-import static com.chooloo.www.callmanager.cursorloader.RecentsCursorLoader.COLUMN_DURATION;
-import static com.chooloo.www.callmanager.cursorloader.RecentsCursorLoader.COLUMN_ID;
-import static com.chooloo.www.callmanager.cursorloader.RecentsCursorLoader.COLUMN_NUMBER;
-import static com.chooloo.www.callmanager.cursorloader.RecentsCursorLoader.COLUMN_TYPE;
-
-public class RecentCall {
-
+class RecentCall {
     // Attributes
-    private Context mContext;
-    private long callId;
-    private String callerName;
-    private String number;
-    private int callType;
-    private String callDuration;
-    private Date callDate;
-    private int count;
-
-    // Call Types
-    public static final int TYPE_OUTGOING = OUTGOING_TYPE;
-    public static final int TYPE_INCOMING = INCOMING_TYPE;
-    public static final int TYPE_MISSED = MISSED_TYPE;
-    public static final int TYPE_VOICEMAIL = VOICEMAIL_TYPE;
-    public static final int TYPE_REJECTED = REJECTED_TYPE;
+    private var mContext: Context
+    var callId: Long = 0
+        private set
+    var callerName: String
+        private set
+    var callerNumber: String
+        private set
+    var callType: Int
+        private set
+    var callDuration: String
+        private set
+    var callDate: Date
+        private set
+    var count = 0
+        private set
 
     /**
      * Constructor
@@ -43,55 +36,27 @@ public class RecentCall {
      * @param duration call's duration
      * @param date     call's date
      */
-    public RecentCall(Context context, String number, int type, String duration, Date date) {
-        this.mContext = context;
-        this.number = number;
-        this.callerName = ContactUtils.lookupContact(context, number).getName();
-        this.callType = type;
-        this.callDuration = duration;
-        this.callDate = date;
+    constructor(context: Context, number: String, type: Int, duration: String, date: Date) {
+        mContext = context
+        callerNumber = number
+        callerName = ContactUtils.lookupContact(context, number).name
+        callType = type
+        callDuration = duration
+        callDate = date
     }
 
-    public RecentCall(Context context, Cursor cursor) {
-        this.mContext = context;
-        this.callId = cursor.getLong(cursor.getColumnIndex(COLUMN_ID));
-        this.number = cursor.getString(cursor.getColumnIndex(COLUMN_NUMBER));
-        Timber.i("Recent Call Number: " + this.number);
-        this.callerName = ContactUtils.lookupContact(context, this.number).getName();
-        Timber.i("Recent Call Name: " + this.callerName);
-        this.callDuration = cursor.getString(cursor.getColumnIndex(COLUMN_DURATION));
-        this.callDate = new Date(cursor.getLong(cursor.getColumnIndex(COLUMN_DATE)));
-        this.callType = cursor.getInt(cursor.getColumnIndex(COLUMN_TYPE));
-        this.count = checkNextMutliple(cursor);
-        cursor.moveToPosition(cursor.getPosition());
-    }
-
-    public long getCallId() {
-        return this.callId;
-    }
-
-    public String getCallerName() {
-        return this.callerName;
-    }
-
-    public String getCallerNumber() {
-        return this.number;
-    }
-
-    public int getCallType() {
-        return this.callType;
-    }
-
-    public String getCallDuration() {
-        return this.callDuration;
-    }
-
-    public Date getCallDate() {
-        return this.callDate;
-    }
-
-    public int getCount() {
-        return this.count;
+    constructor(context: Context, cursor: Cursor) {
+        mContext = context
+        callId = cursor.getLong(cursor.getColumnIndex(RecentsCursorLoader.COLUMN_ID))
+        callerNumber = cursor.getString(cursor.getColumnIndex(RecentsCursorLoader.COLUMN_NUMBER))
+        Timber.i("Recent Call Number: " + callerNumber)
+        callerName = ContactUtils.lookupContact(context, callerNumber).name
+        Timber.i("Recent Call Name: " + callerName)
+        callDuration = cursor.getString(cursor.getColumnIndex(RecentsCursorLoader.COLUMN_DURATION))
+        callDate = Date(cursor.getLong(cursor.getColumnIndex(RecentsCursorLoader.COLUMN_DATE)))
+        callType = cursor.getInt(cursor.getColumnIndex(RecentsCursorLoader.COLUMN_TYPE))
+        count = checkNextMutliple(cursor)
+        cursor.moveToPosition(cursor.position)
     }
 
     /**
@@ -99,12 +64,13 @@ public class RecentCall {
      *
      * @return String
      */
-    public String getCallDateString() {
-        android.text.format.DateFormat dateFormat = new android.text.format.DateFormat();
-        return dateFormat.format("yy ", this.callDate).toString() +
-                new java.text.DateFormatSymbols().getShortMonths()[Integer.parseInt(dateFormat.format("MM", this.callDate).toString()) - 1] +
-                dateFormat.format(" dd, hh:mm", this.callDate).toString();
-    }
+    val callDateString: String
+        get() {
+            val dateFormat = DateFormat()
+            return DateFormat.format("yy ", callDate).toString() +
+                    DateFormatSymbols().shortMonths[DateFormat.format("MM", callDate).toString().toInt() - 1] +
+                    DateFormat.format(" dd, hh:mm", callDate).toString()
+        }
 
     /**
      * Check how many calls from the same contact are there from the current entry
@@ -112,16 +78,24 @@ public class RecentCall {
      * @param cursor
      * @return Amount of the calls from the same contact in a row
      */
-    public int checkNextMutliple(Cursor cursor) {
-        int count = 1;
+    fun checkNextMutliple(cursor: Cursor): Int {
+        var count = 1
         while (true) {
             try {
-                cursor.moveToNext();
-                if (cursor.getString(cursor.getColumnIndex(NUMBER)).equals(number)) count++;
-                else return count;
-            } catch (Exception e) { // probably index out of bounds exception
-                return count;
+                cursor.moveToNext()
+                if (cursor.getString(cursor.getColumnIndex(CallLog.Calls.NUMBER)) == callerNumber) count++ else return count
+            } catch (e: Exception) { // probably index out of bounds exception
+                return count
             }
         }
+    }
+
+    companion object {
+        // Call Types
+        const val TYPE_OUTGOING = CallLog.Calls.OUTGOING_TYPE
+        const val TYPE_INCOMING = CallLog.Calls.INCOMING_TYPE
+        const val TYPE_MISSED = CallLog.Calls.MISSED_TYPE
+        const val TYPE_VOICEMAIL = CallLog.Calls.VOICEMAIL_TYPE
+        const val TYPE_REJECTED = CallLog.Calls.REJECTED_TYPE
     }
 }

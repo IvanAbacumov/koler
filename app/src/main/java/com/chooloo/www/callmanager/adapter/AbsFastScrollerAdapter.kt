@@ -1,17 +1,10 @@
-package com.chooloo.www.callmanager.adapter;
+package com.chooloo.www.callmanager.adapter
 
-import android.content.Context;
-import android.database.Cursor;
+import android.content.Context
+import android.database.Cursor
+import androidx.recyclerview.widget.RecyclerView
 
-import androidx.recyclerview.widget.RecyclerView;
-
-public abstract class AbsFastScrollerAdapter<VH extends RecyclerView.ViewHolder> extends AbsCursorRecyclerViewAdapter<VH> {
-
-    public AbsFastScrollerAdapter(Context context, Cursor cursor) {
-        super(context, cursor);
-    }
-
-    public abstract String getHeaderString(int position);
-
-    public abstract void refreshHeaders();
+abstract class AbsFastScrollerAdapter<VH : RecyclerView.ViewHolder?>(context: Context?, cursor: Cursor?) : AbsCursorRecyclerViewAdapter<VH>(context!!, cursor) {
+    abstract fun getHeaderString(position: Int): String?
+    abstract fun refreshHeaders()
 }

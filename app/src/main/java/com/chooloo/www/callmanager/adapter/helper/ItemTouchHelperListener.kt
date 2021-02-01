@@ -1,27 +1,26 @@
-package com.chooloo.www.callmanager.adapter.helper;
+package com.chooloo.www.callmanager.adapter.helper
 
-import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.RecyclerView
 
-public interface ItemTouchHelperListener {
-
+interface ItemTouchHelperListener {
     /**
      * Called when a view is selected.
      *
      * @param holder The holder of the view to drag.
      */
-    void onItemSelected(RecyclerView.ViewHolder holder);
+    fun onItemSelected(holder: RecyclerView.ViewHolder?)
 
     /**
      * Called when a view is requesting a start of a drag.
      *
      * @param holder The holder of the view to drag.
      */
-    void onStartDrag(RecyclerView.ViewHolder holder);
+    fun onStartDrag(holder: RecyclerView.ViewHolder?)
 
     /**
      * Called when a view is requesting a start of a swipe.
      *
      * @param holder The holder of the view to drag.
      */
-    void onStartSwipe(RecyclerView.ViewHolder holder);
+    fun onStartSwipe(holder: RecyclerView.ViewHolder?)
 }

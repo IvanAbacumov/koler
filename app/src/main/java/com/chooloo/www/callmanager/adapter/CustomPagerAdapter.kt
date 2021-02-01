@@ -1,66 +1,34 @@
-package com.chooloo.www.callmanager.adapter;
+package com.chooloo.www.callmanager.adapter
 
-import android.content.Context;
-import android.widget.Toast;
+import android.content.Context
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentManager
+import androidx.fragment.app.FragmentPagerAdapter
+import com.chooloo.www.callmanager.R
+import com.chooloo.www.callmanager.ui.fragment.CGroupsFragment
+import com.chooloo.www.callmanager.ui.fragment.ContactsPageFragment
+import com.chooloo.www.callmanager.ui.fragment.RecentsPageFragment
+import com.chooloo.www.callmanager.util.PreferenceUtils
+import java.lang.reflect.InvocationTargetException
+import java.util.*
 
-import androidx.annotation.Nullable;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentPagerAdapter;
-import androidx.preference.Preference;
-import androidx.preference.PreferenceManager;
-
-import com.chooloo.www.callmanager.R;
-import com.chooloo.www.callmanager.ui.fragment.CGroupsFragment;
-import com.chooloo.www.callmanager.ui.fragment.ContactsFragment;
-import com.chooloo.www.callmanager.ui.fragment.ContactsPageFragment;
-import com.chooloo.www.callmanager.ui.fragment.RecentsFragment;
-import com.chooloo.www.callmanager.ui.fragment.RecentsPageFragment;
-import com.chooloo.www.callmanager.util.PreferenceUtils;
-
-import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import timber.log.Timber;
-
-public class CustomPagerAdapter extends FragmentPagerAdapter {
-
-    // -- Constants -- //
-    private Context mContext;
-
-    private List<Class> mClasses = new ArrayList<>(Arrays.asList(RecentsPageFragment.class, ContactsPageFragment.class, CGroupsFragment.class));
-    private List<String> mTitles = new ArrayList<>(Arrays.asList("Recents", "Contacts", "Excel"));
-
-    /**
-     * Constructor
-     *
-     * @param context
-     * @param fragmentManager
-     */
-    public CustomPagerAdapter(Context context, FragmentManager fragmentManager) {
-        super(fragmentManager);
-        this.mContext = context;
-
-        // Enable excel tab by the preference
-        PreferenceUtils.getInstance(this.mContext);
-        boolean isEnableExcel = PreferenceUtils.getInstance().getBoolean(R.string.pref_excel_enable_key);
-        this.toggleExcelTab(isEnableExcel);
-    }
+class CustomPagerAdapter(// -- Constants -- //
+        private val mContext: Context, fragmentManager: FragmentManager?) : FragmentPagerAdapter(fragmentManager) {
+    private val mClasses: MutableList<Class<*>> = ArrayList(Arrays.asList(RecentsPageFragment::class.java, ContactsPageFragment::class.java, CGroupsFragment::class.java))
+    private val mTitles: MutableList<String> = ArrayList(Arrays.asList("Recents", "Contacts", "Excel"))
 
     /**
      * Toggle excel tab by a given boolean
      *
      * @param isShow show or don't show the excel tab
      */
-    private void toggleExcelTab(boolean isShow) {
-        if (!isShow && mClasses.contains(CGroupsFragment.class)) {
-            this.mClasses.remove(CGroupsFragment.class);
-            this.mTitles.remove("Excel");
-        } else if (isShow && !mClasses.contains(CGroupsFragment.class)) {
-            this.mClasses.add(CGroupsFragment.class);
-            this.mTitles.add("Excel");
+    private fun toggleExcelTab(isShow: Boolean) {
+        if (!isShow && mClasses.contains(CGroupsFragment::class.java)) {
+            mClasses.remove(CGroupsFragment::class.java)
+            mTitles.remove("Excel")
+        } else if (isShow && !mClasses.contains(CGroupsFragment::class.java)) {
+            mClasses.add(CGroupsFragment::class.java)
+            mTitles.add("Excel")
         }
     }
 
@@ -69,9 +37,8 @@ public class CustomPagerAdapter extends FragmentPagerAdapter {
      *
      * @return
      */
-    @Override
-    public int getCount() {
-        return mClasses.size();
+    override fun getCount(): Int {
+        return mClasses.size
     }
 
     /**
@@ -80,22 +47,21 @@ public class CustomPagerAdapter extends FragmentPagerAdapter {
      * @param position the position of the page
      * @return Fragment the fragment representing the page itself
      */
-    @Override
-    public Fragment getItem(int position) {
+    override fun getItem(position: Int): Fragment? {
         try {
-            return (Fragment) mClasses.get(position).getDeclaredConstructor(new Class[]{Context.class}).newInstance(mContext);
-        } catch (NullPointerException e) {
-            e.printStackTrace();
-        } catch (NoSuchMethodException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        } catch (InstantiationException e) {
-            e.printStackTrace();
-        } catch (InvocationTargetException e) {
-            e.printStackTrace();
+            return mClasses[position].getDeclaredConstructor(*arrayOf<Class<*>>(Context::class.java)).newInstance(mContext) as Fragment
+        } catch (e: NullPointerException) {
+            e.printStackTrace()
+        } catch (e: NoSuchMethodException) {
+            e.printStackTrace()
+        } catch (e: IllegalAccessException) {
+            e.printStackTrace()
+        } catch (e: InstantiationException) {
+            e.printStackTrace()
+        } catch (e: InvocationTargetException) {
+            e.printStackTrace()
         }
-        return null;
+        return null
     }
 
     /**
@@ -104,13 +70,25 @@ public class CustomPagerAdapter extends FragmentPagerAdapter {
      * @param position position of the page
      * @return String the string representing the title of the page
      */
-    @Nullable
-    @Override
-    public CharSequence getPageTitle(int position) {
-        try {
-            return mTitles.get(position);
-        } catch (IndexOutOfBoundsException e) {
-            return null;
+    override fun getPageTitle(position: Int): CharSequence? {
+        return try {
+            mTitles[position]
+        } catch (e: IndexOutOfBoundsException) {
+            null
         }
+    }
+
+    /**
+     * Constructor
+     *
+     * @param context
+     * @param fragmentManager
+     */
+    init {
+
+        // Enable excel tab by the preference
+        PreferenceUtils.getInstance(mContext)
+        val isEnableExcel = PreferenceUtils.getInstance().getBoolean(R.string.pref_excel_enable_key)
+        toggleExcelTab(isEnableExcel)
     }
 }
